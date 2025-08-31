@@ -43,14 +43,14 @@ int main() {
 
     ULONGLONG systemEPROCESS = GetEprocessFromPid(4);
     if (systemEPROCESS == 0) {
-        printf("Failed to get EPROCESS for system process.\xA");
+        printf("Failed to get EPROCESS for system process.\n");
         return 1;
     }
 
     const int UniqueProcessId = 0x1D0;
     DWORD systemProcessId = 0;
     if (!ReadPhysicalMemoryDword(vtop(systemEPROCESS + UniqueProcessId), &systemProcessId)) {
-        printf("Failed to read UniqueProcessId from system process.\xA");
+        printf("Failed to read UniqueProcessId from system process.\n");
         return 1;
     }
 
