@@ -2,11 +2,11 @@
 
 ULONGLONG ResolvePsInitialSystemProcessOffset() {
     HMODULE hKernel = LoadLibraryW(L"ntoskrnl.exe");
-    if (hKernel == NULL)
+    if (!hKernel)
         return 0;
 
     ULONGLONG PsInitialSystemProcessOffset = (ULONGLONG)GetProcAddress(hKernel, "PsInitialSystemProcess");
-    if (PsInitialSystemProcessOffset == 0)
+    if (!PsInitialSystemProcessOffset)
         return 0;
 
     return (PsInitialSystemProcessOffset - (ULONGLONG)hKernel);
@@ -24,17 +24,15 @@ ULONGLONG ResolveKernelBaseAddress() {
 
 ULONGLONG ResolveSystemProcessBase() {
     ULONGLONG PsInitialSystemProcessOffset = ResolvePsInitialSystemProcessOffset();
-    if (PsInitialSystemProcessOffset == 0)
+    if (!PsInitialSystemProcessOffset)
         return 1;
 
     ULONGLONG KernelBase = ResolveKernelBaseAddress();
-    if (KernelBase == 0)
+    if (!KernelBase)
         return 1;
 
     ULONGLONG BaseAddress = 0;
-    BOOLEAN Result = ReadPhysicalMemoryQword(vtop(KernelBase + PsInitialSystemProcessOffset), &BaseAddress);
-
-    if (Result == FALSE)
+    if (!ReadPhysicalMemoryQword(vtop(KernelBase + PsInitialSystemProcessOffset), &BaseAddress))
         return 0;
 
     return BaseAddress;
@@ -42,7 +40,7 @@ ULONGLONG ResolveSystemProcessBase() {
 
 ULONGLONG GetEprocessFromPid(DWORD pid) {
     ULONGLONG systemEprocess = ResolveSystemProcessBase();
-    if (systemEprocess == 0)
+    if (!systemEprocess)
         return 0;
 
     ULONGLONG listHead = systemEprocess + EP_ACTIVELINKS_OFFSET, listEntry = 0, current = systemEprocess;

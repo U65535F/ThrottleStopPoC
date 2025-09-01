@@ -3,21 +3,18 @@
 
 HANDLE g_hDevice = INVALID_HANDLE_VALUE;
 
-void error(const char* msg) {
-    printf("Error: %s (code: %lu)\n", msg, GetLastError());
-    ExitProcess(1);
-}
-
 BOOL IsElevated() {
     HANDLE hToken = NULL;
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
-        error("OpenProcessToken failed");
-
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken)) {
+        printf("Error: OpenProcessToken failed (code: %lu)\n", GetLastError());
+        ExitProcess(1);
+    }
     TOKEN_ELEVATION elevation;
     DWORD size = sizeof(TOKEN_ELEVATION);
     if (!GetTokenInformation(hToken, TokenElevation, &elevation, sizeof(elevation), &size)) {
         CloseHandle(hToken);
-        error("GetTokenInformation failed");
+        printf("Error: GetTokenInformation failed (code: %lu)\n", GetLastError());
+        ExitProcess(1);
     }
 
     CloseHandle(hToken);
@@ -32,18 +29,22 @@ int main() {
 
     g_hDevice = CreateFileW(DEVICE_NAME, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (g_hDevice == INVALID_HANDLE_VALUE) {
-		error("Failed to open ThrottleStop device handle");
+        printf("Error: Failed to open ThrottleStop device handle using CreateFileW (code: %lu)\n", GetLastError());
+        return 1;
     }
 
     NTSTATUS status = BuildMemoryMap();
     if (!NT_SUCCESS(status)) {
         printf("Failed to build memory map: 0x%X\n", status);
+        CloseHandle(g_hDevice);
         return 1;
     }
 
     ULONGLONG systemEPROCESS = GetEprocessFromPid(4);
     if (systemEPROCESS == 0) {
         printf("Failed to get EPROCESS for system process.\n");
+        FreeMemoryMaps();
+        CloseHandle(g_hDevice);
         return 1;
     }
 
@@ -51,6 +52,8 @@ int main() {
     DWORD systemProcessId = 0;
     if (!ReadPhysicalMemoryDword(vtop(systemEPROCESS + UniqueProcessId), &systemProcessId)) {
         printf("Failed to read UniqueProcessId from system process.\n");
+        FreeMemoryMaps();
+        CloseHandle(g_hDevice);
         return 1;
     }
 
@@ -64,6 +67,8 @@ int main() {
         WriteIoPortByte(0xCF9, 0x0E);
 		printf("Restart command sent. You are not supposed to see this, if you are then there's something off.\n");
     }
+
     FreeMemoryMaps();
     CloseHandle(g_hDevice);
+    return 0;
 }
