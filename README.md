@@ -15,6 +15,8 @@ There also seems to be arbitrary MSR read and write but I wasn't able to get the
 Feel free to look it yourself.
 Read MSR is at `0x80006448` and write at `0x8000644C`.
 
+If you were able to get it working, please submit an issue describing the procedure.
+
 ---
 > All of the IOCTL calls mentioned below are implemented in [Exploit.c](src/Exploit.c) file. 
 ---
