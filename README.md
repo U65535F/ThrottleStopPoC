@@ -11,6 +11,10 @@ ThrottleStop is a small legitimate application used to monitor and correct CPU t
 | 0x80006430    | Arbitrary port read       |
 | 0x80006434    | Arbitrary port write      |
 
+There also seems to be arbitrary MSR read and write but I wasn't able to get them working.
+Feel free to look it yourself.
+Read MSR is at `0x80006448` and write at `0x8000644C`.
+
 ---
 > All of the IOCTL calls mentioned below are implemented in [Exploit.c](src/Exploit.c) file. 
 ---
